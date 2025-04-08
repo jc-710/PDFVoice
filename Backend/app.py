@@ -7,6 +7,7 @@ from flask import Flask, request, jsonify, send_file
 from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5HifiGan
 from speechbrain.pretrained import EncoderClassifier  
 from flask_cors import CORS
+from pydub import AudioSegment
 
 app = Flask(__name__)
 CORS(app)
@@ -69,6 +70,17 @@ def text_to_speech(text, output_path):
     except Exception as e:
         print(f"Error during TTS: {e}")
         return None
+def change_audio_speed(file_path, speed=0.8):
+    # Load the audio file
+    audio = AudioSegment.from_file(file_path)
+    
+    # Change the speed
+    new_audio = audio._spawn(audio.raw_data, overrides={
+        "frame_rate": int(audio.frame_rate * speed)
+    }).set_frame_rate(audio.frame_rate)
+
+    new_audio.export(file_path, format="wav")
+    return file_path
 
 @app.route('/convert', methods=['POST'])
 def convert_pdf_to_audio():
@@ -87,7 +99,8 @@ def convert_pdf_to_audio():
     if not text:
         return jsonify({"error": "No text found in PDF"}), 400
 
-    audio_path = text_to_speech(text, output_audio)
+    old_audio_path = text_to_speech(text, output_audio)
+    audio_path = change_audio_speed(old_audio_path)
     if not audio_path:
         return jsonify({"error": "Failed to generate audio"}), 500
 
