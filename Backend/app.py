@@ -13,7 +13,7 @@ app = Flask(__name__)
 CORS(app)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
+print(device)
 # Load AI-based TTS model
 processor = SpeechT5Processor.from_pretrained("microsoft/speecht5_tts")
 model = SpeechT5ForTextToSpeech.from_pretrained("microsoft/speecht5_tts").to(device)
